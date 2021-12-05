@@ -9,12 +9,6 @@ private:
     double _is_contained;
 
 public:
-    // Tuple(boost::shared_ptr<Segment_creator> seg,
-    //       double score) :
-    //       _seg(seg),
-    //       _score(score),
-    //       _is_contained(false) {
-    //       }
 
     Tuple(boost::shared_ptr<Segment_creator> seg,
           double score,
