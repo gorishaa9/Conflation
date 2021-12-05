@@ -47,32 +47,6 @@ class MapWrite{
 
     void add_tags(Builder* way_builder, const osmium::TagList& tags){
         TagListBuilder tag_builder{buffer, way_builder};
-        // for(const auto& tag : tags){
-            // if(!tag.key())
-            //     continue;
-            // const char* t = tag.key();
-            // if( t == NULL || t == "" )
-            //     continue;
-            // if( !t || !t[0] )
-            //     continue;
-            // // cout << "t ... " << *t << "\n";
-            // string str( tag.key() );
-            // if( !tag )
-            //     continue;
-            // if(!tag.key())
-            //     continue;
-            // if(tag.key()[0] == '\0')
-            //     continue;
-            // if( tag.key() == "" )
-            //     continue;
-            // if( !tag.key()[ 0 ] )
-            //     continue;
-
-            // if(!strcmpare("created_by"))
-            //     continue;
-        //     tag_builder.add_tag(tag);
-        //
-        // }
         tag_builder.add_tag( "highway", "footway" );
     }
 
@@ -106,12 +80,6 @@ class MapWrite{
         }
 
         if(ref_seg || (!ref_seg && tar_seg && isolated_segments.find(tar_seg->get_id()) != isolated_segments.end())){
-            // if( ref_seg )
-            //     // cout << "ref segment present ... " << ref_seg->get_id() << " \n";
-            // else
-            //     // cout << "ref segment not present ... \n";
-            // if( ref_seg && ref_seg->get_id() == 1004 )
-            //     // cout << "node mapping for last node ... " << tar_seg->get_second()->get_id() << "\t" << node_mapping[ tar_seg->get_second()->get_id() ].get_id() << "\n";
             source = new_int_nodes;
             shifted = new_int_nodes;
 
@@ -120,7 +88,6 @@ class MapWrite{
 
             for(auto& int_node : new_int_nodes){
                 Coordinates c = int_node.get_location();
-                // // cout << "build way 1 ... " << c.x << "\t" << c.y << "\t" << int_node.get_id() << "\n";
                 osmium::builder::add_node(buffer,
                     _id(int_node.get_id()),
                     _version(1),
@@ -142,19 +109,10 @@ class MapWrite{
                 }
             }
             if(ref_seg){
-                // // cout << "tar_seg ... " << tar_seg->get_id() << "\n";
+                
                 add_tags(&way_builder, ref_seg->tags());
-                // TagListBuilder tag_builder{buffer, way_builder};
-                // for( auto tag : ref_seg->tags() ){
-                //     tag
-                // }
+                
             }
-
-
-            // if(!obj.tags().has_key("highway")){
-            //     TagListBuilder tag_builder{buffer, &way_builder};
-            //     tag_builder.add_tag("highway", "footway");
-            // }
         }
         else{
             IntNode src1 = new_int_nodes.front(), src2 = new_int_nodes.back();
@@ -235,10 +193,6 @@ class MapWrite{
                 }
             }
             add_tags(&way_builder, tar_seg->tags());
-            // if(!obj.tags().has_key("highway")){
-            //     TagListBuilder tag_builder{buffer, &way_builder};
-            //     tag_builder.add_tag("highway", "primary");
-            // }
         }
         calculateMergingAccuracy( source, shifted );
     }
@@ -298,33 +252,7 @@ class MapWrite{
     Coordinates getCoordinatesAtFraction(Coordinates c1, double distance, Coordinates c3){
 
         double bearing = findInitialBearing( c1, c3 );
-        // double distance = f * ( haversine::distance( c1, c3 ) );
         return destinationFromStartBearing( c1, bearing, distance );
-        // double delta = haversine::distance(c1, c3)/RADIUS;
-        // check_coord << "delta in getcoordinates() ... " << delta << "\n";
-        // check_coord << "fraction f ... " << f << "\n";
-        // double a = sin((1-f)*delta)/sin(delta);
-        // double b = sin(f*delta)/sin(delta);
-        //
-        // Coordinates c1_r = degreeToRadians(c1);
-        // Coordinates c3_r = degreeToRadians(c3);
-        //
-        // double x = a*cos(c1_r.x)*cos(c1_r.y) + b*cos(c3_r.x)*cos(c3_r.y);
-        // double y = a*cos(c1_r.x)*sin(c1_r.y) + b*cos(c3_r.x)*sin(c3_r.y);
-        // double z = a*sin(c1_r.x) + b*sin(c3_r.x);
-        //
-        // double c2_x = atan2(z, sqrt((x*x) + (y*y)));
-        // double c2_y = atan2(y, x);
-        //
-        // Coordinates c2{c2_x, c2_y};
-        // c2 = radiansToDegree(c2);
-        // double lon = c2.x, lat = c2.y;
-        // if( lon <= -180 || lon > 180 )
-        //     lon = fmod( ( lon + 540 ), 360) - 180;
-        //
-        // if( lat < -90 || lat > 90 )
-        //     lat = abs( fmod(( fmod(lat, 360) + 270 ), 360) - 180 ) - 90;
-        // return Coordinates{ lon, lat };
 
     }
 
@@ -346,11 +274,6 @@ class MapWrite{
       double destLatitude = destLatitudeRadian * DegreesCoeff;
       double destLongitude = destLongitudeRadian * DegreesCoeff;
 
-      // return new Location
-      // {
-      //     Latitude = Math.Round(Wrap90(destLatitude), 6),
-      //     Longitude = Math.Round(Wrap180(destLongitude), 6)
-      // };
       return Coordinates{ wrap180(destLongitude), wrap90(destLatitude) };
     }
 
@@ -402,20 +325,6 @@ class MapWrite{
     Coordinates getCoordinatesAtDistance(Coordinates c1, double distance, Coordinates c3){
         double bearing = findInitialBearing( c1, c3 );
         return destinationFromStartBearing( c1, bearing, distance );
-        // Coordinates c1_r = degreeToRadians(c1);
-        // Coordinates c3_r = degreeToRadians(c3);
-        //
-        // double t1 = sin(c1_r.y - c3_r.y)*cos(c3.x);
-        // double t2 = cos(c1_r.x)*sin(c3_r.x) - sin(c1_r.x)*cos(c3_r.x)*cos(c1_r.y - c3_r.y);
-        //
-        // double brng = atan2(t1, t2);
-        //
-        // double delta = d/RADIUS;
-        // double x = asin(sin(c1_r.x)*cos(delta) + cos(c1_r.x)*sin(delta)*cos(brng));
-        // double y = c1_r.y + atan2(sin(brng)*sin(delta)*cos(c1_r.x), cos(delta) - sin(c1_r.x)*sin(c3_r.x));
-        //
-        // Coordinates c2_r{x, y};
-        // return radiansToDegree(c2_r);
     }
 
     void mapMissingNodes(SVal ref_seg, SVal tar_seg, vector<IntNode> &new_int_nodes){
@@ -693,111 +602,7 @@ public:
         return false;
     }
 
-    // void findUnmatchedSegments(vector<JoinResult> join_result){
-    //     if(join_result.size() == 0)
-    //         return;
-    //
-    //     map<SKey, TVal> output = join_result[0].result;
-    //     map<SKey, vector<SVal>> to_be_added; //key is the segment to be removed from the target database and the corresponding vector are the segments to be added in the target database.
-    //     vector<SKey> to_be_erased;
-    //     for(auto& it : output){
-    //         SKey delta = it.first;
-    //         SKey matched = it.second->segment()->get_id();
-    //
-    //         if( delta == 1005 ){
-    //             // cout << "int nodes for match of 1005 ... \n";
-    //             vector< IntNode > all_int_nodes = it.second->segment()->get_intermediate_nodes();
-    //             for( auto it : all_int_nodes )
-    //                 // cout << it.get_location().x << "\t" << it.get_location().y << "\n";
-    //         }
-    //
-    //         endsWithinBounds(segments[0].find(delta)->second, it.second->segment());
-    //
-    //         if(matched_segments.find(matched) != matched_segments.end())
-    //             matched_segments.find(matched)->second.push_back(delta);
-    //         else
-    //             matched_segments.insert({matched, {delta}});
-    //
-    //         if(matched >= 0)
-    //             continue;
-    //
-    //         if(matched < 0){    //the segment can be splitted or sef-joined. In either case, get the non-negative (original) parents.
-    //             SKey first = it.second->segment()->get_first()->get_id();
-    //             SKey second = it.second->segment()->get_second()->get_id();
-    //             if(first > 0 && second > 0){         //self-joined segment.
-    //                 target.insert({matched, it.second->segment()});
-    //                 vector<SKey> parents = it.second->segment()->parents();
-    //                 for(auto& item : parents){
-    //                     if(matched_segments.find(item) != matched_segments.end())
-    //                         matched_segments.find(item)->second.push_back(delta);
-    //                     else
-    //                         matched_segments.insert({item, {delta}});
-    //                 }
-    //             }
-    //             else{
-    //                 vector<SKey> parents = it.second->segment()->parents();
-    //                 size_t size = parents.size(), i = 0;
-    //                 if(delta == 1960)
-    //                     checking << "Parents for " << delta << " : " << size << "\n";
-    //                 while(i < size){
-    //                     SKey parent_id = parents[i];
-    //                     if(delta == 1960)
-    //                         checking << parent_id << "\n";
-    //                     if(parent_id > 0){
-    //                         if(parent_id == 3498)
-    //                             // cout << "Ohh no! 3498 inserted in matched, in parent!\n\n";
-    //                         if(matched_segments.find(parent_id) != matched_segments.end())
-    //                             matched_segments.find(parent_id)->second.push_back(delta);
-    //                         else
-    //                             matched_segments.insert({parent_id, {delta}});
-    //                     }
-    //                         // target.erase(parent_id);
-    //                     else
-    //                         to_be_erased.push_back(parent_id);
-    //                     i++;
-    //                 }
-    //                 checking << "\n";
-    //
-    //                 if(first < 0 && second > 0){
-    //                     vector<SVal> segs = interpolated_segments.find(first)->second;
-    //                     target.insert({segs[0]->get_id(), segs[0]});
-    //                     target.insert({segs[1]->get_id(), segs[1]});
-    //                 }
-    //                 else if(second < 0 && first > 0){
-    //                     vector<SVal> segs = interpolated_segments.find(second)->second;
-    //                     target.insert({segs[0]->get_id(), segs[0]});
-    //                     target.insert({segs[1]->get_id(), segs[1]});
-    //                 }
-    //                 else if(first < 0 && second < 0){
-    //                     vector<SVal> segs1 = interpolated_segments.find(first)->second;
-    //                     vector<SVal> segs2 = interpolated_segments.find(second)->second;
-    //
-    //                     target.insert({segs1[0]->get_id(), segs1[0]});
-    //                     target.insert({segs1[1]->get_id(), segs1[1]});
-    //                     target.insert({segs2[0]->get_id(), segs2[0]});
-    //                     target.insert({segs2[1]->get_id(), segs2[1]});
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     for(auto& it : to_be_erased){
-    //         target.erase(it);
-    //     }
-    //     for(auto& it : target){
-    //         SKey id = it.first;
-    //         SVal seg = it.second;
-    //
-    //         SKey first = seg->get_first()->get_id(), second = seg->get_second()->get_id();
-    //         if(relaxed_joins.find(first) != relaxed_joins.end() && relaxed_joins.find(first)->second == second && matched_segments.find(id) != matched_segments.end())
-    //             continue;
-    //         if(matched_segments.find(id) == matched_segments.end()){
-    //             unmatched_segments.insert(id);
-    //             unm << id << "\t" << seg->get_first()->get_id() << "\t" << seg->get_second()->get_id() << "\n";
-    //         }
-    //     }
-    //     connectedToUnmatched(target);
-    // }
-
+    
     void findUnmatchedSegments(vector<JoinResult> join_result){
         if(join_result.size() == 0)
             return;
