@@ -2,7 +2,6 @@
 #define FINDMATCHES_H
 
 #include "terminal_node.hpp"
-//#include "CountHandler.hpp"
 #include "segment.hpp"
 #include "SegmentHandler.hpp"
 #include "../index/Insert.hh"
@@ -30,13 +29,12 @@ char* input_file;
 map<SKey, SKey> node_segs;
 map<SKey, SVal> splitted_segments; //these are splitted query segments.
 map<SKey, SVal> splitted_querys;
-// map<SKey, map<SKey, vector<tn>>> modified_nodes; //first SKey is source_nodeId, second SKey is the candidate_segId.
 long long int modified_nodeId = -1000;
 long long int modified_segId = -1000;
-// map<SKey, vector<SKey>> interpolation; //key is the id of original segment in target database, value is the id of interpolated segments.
+
 map<SKey, vector<SVal>> interpolated_segments; //key is the interpolated node id, value are the 2 splitted segments from the interpolated node.
 map< SKey, SKey > parent_interpolated_segments; // key is the interpolated node id of the cs and value is the id of the cs that is interpolated.
-//In both the interpolated and self-joined segments, the key and value both will be segments from target database.
+
 map< SKey, map< SKey, tn > > modified_nodes; //first SKey - source_nodeID, second SKey - parent csID, tn - modified terminal node.
 map< SKey, map< SKey, SVal > > end_points_segments; // two SKeys are two end points of the corresponding segment SVal.
 
@@ -45,8 +43,6 @@ ofstream testFile("testFile20.txt");
 ofstream itest("itest.txt");
 ofstream mnodes("mnodes.txt");
 ofstream checking("checking.txt");
-// ofstream test_cs("test_cs.txt");
-// ofstream test_delta("test_delta.txt");
 
 boost::shared_ptr<Terminal_node> identity_node(new Terminal_node(-1, Coordinates(-1, -1), -1));
 
@@ -62,25 +58,31 @@ public:
     }
 
     void populate(map<SKey, SVal> &querys, bool full_pass){     //input is the query database -- OSM.
-
+	"""
+	Function to populate the relations with candidate matches for every segment in the reference database.
+	"""
         long int total_count=0;
+	// querys are all the segments in the reference database.
         for(auto it : querys){
 
             cout << "\n\n\nStarting with ------------------------- " << it.first << "\t" << it.second->get_first()->get_id() << "\t" << it.second->get_second()->get_id() << "\n\n\n";
 
+	    // `delta` is the segment in the reference database.
             boost::shared_ptr<Segment_creator> delta = it.second;
-            std::list<long long int> candidateMatches = rtree_search(delta);
-            boost::shared_ptr<Relation> rel(new Relation(delta->get_id()));
-            boost::shared_ptr<Rectangle> box;
-            Geometry* buff;
-            vector<IntNode> cl;
-			      const osmium::TagList tags;
+            std::list<long long int> candidateMatches = rtree_search(delta); // search for the matches in RTree
+            boost::shared_ptr<Relation> rel(new Relation(delta->get_id())); // relation corresponding to the segment in the reference database.
+            boost::shared_ptr<Rectangle> box; // bounding box
+            Geometry* buff; // buffer
+            vector<IntNode> cl; // sequenece of intermediate points in the segment
+			      const osmium::TagList tags; //tags associated with the segment
             boost::shared_ptr<Segment_creator> id_seg(new Segment_creator(0, identity_node, identity_node, delta->get_length(), 0, box, buff, cl, 0, tags));
             boost::shared_ptr<Tuple> dummy(new Tuple(id_seg, 0, true));
+	    // insert a dummy segment in relation corrsponding to every segment in the reference database.
             rel->insert(dummy);
 
             map< SKey, map< SKey, vector< SVal > > > map_entries;
 
+		// uncomment the code below to find the original set of candidate matches in the target database found by RTree, for a segment in the reference database (for debugging purposes).
       			// if(delta->get_id() == 1005){
         		// 		cout << "All matches : \n";
         		// 		for(auto& i : candidateMatches){
@@ -90,6 +92,7 @@ public:
       			// }
             // cout << "candidates size before ... " << candidateMatches.size() << "\n";
   			    filterCandidates(delta, candidateMatches);
+		// uncomment below to find the set of candidate matches after filtering the candidates by the algorithm.
             // cout << "candidates size after ... " << candidateMatches.size() << "\n";
       			// if(delta->get_id() == 1005){
         		// 		cout << "Filtered matches : \n";
@@ -147,7 +150,7 @@ public:
 
                   else if(!isWithinCE(qs, ms, ce) && !isWithinCE(qe, me, ce) && !isWithinCE(qs, me, ce) && !isWithinCE(qe, ms, ce)){
 
-                      cout << "Correct place in populate() ... 3" << "\n";
+                      cout << "Correct place in populate() ... 3" << "\n"; //debugging
 
                       vector<SVal> cs_primes = determineCase(delta, cs, candidateMatches, map_entries);
                       if( find( cs_primes.begin(), cs_primes.end(), cs ) == cs_primes.end())
@@ -352,35 +355,6 @@ public:
         return joined_result;
 
 
-        // for( auto seg2 : candidates ){
-        //     if( same_entries( seg1, seg2 ) || in_parent( seg2, seg1 ) )
-        //         continue;
-        //     SVal joined;
-        //     if( seg1->get_second()->get_id() == ( seg2 )->get_first()->get_id() ){
-        //         joined = concat( seg1, seg2, true );
-        //         cout << "joined ... " << joined->get_first()->get_id() << "\t" << joined->get_second()->get_id() << "\n";
-        //         // break;
-        //     }
-        //     else if( ( seg2 )->get_second()->get_id() == seg1->get_first()->get_id() ){
-        //         joined = concat( seg2, seg1, true );
-        //         cout << "joined ... " << joined->get_first()->get_id() << "\t" << joined->get_second()->get_id() << "\n";
-        //
-        //         // break;
-        //     }
-        //     else if( seg1->get_first()->get_id() == ( seg2 )->get_first()->get_id() ||
-        //              seg1->get_second()->get_id() == ( seg2 )->get_second()->get_id() ){
-        //         joined = concat( seg1, seg2, false );
-        //         cout << "joined ... " << joined->get_first()->get_id() << "\t" << joined->get_second()->get_id() << "\n";
-        //
-        //         // break;
-        //     }
-        //     if( joined )
-        //         joined_result.push_back( joined );
-        // }
-        // return joined_result;
-    }
-
-
     SVal concatUtil( SVal seg1, SVal seg2 ){
         SVal joined;
         if( seg1->get_second()->get_id() == ( seg2 )->get_first()->get_id() ){
@@ -484,16 +458,11 @@ public:
 				// }
 			}
             testFile << "---------\n";
-
-			// if(it.first == 1189){
-			//
-			// }
         }
 
         cout << "Interpolated Nodes: " << (modified_nodeId +1000) << "\n\n";
 		    cout << "Size of reference dataset : " << querys.size() << "\n";
         cout << "Average number of candidate matches per relation with CE 20: " << (total_count)/(segments[0].size()) << "\n\n";
-        // return relations;
 	}
 
 
@@ -514,18 +483,8 @@ public:
         }
     		vector<SVal> results = handleStubs(delta, cs, candidateMatches, map_entries);
 
-    		for(auto& r : results){
-            // if( map_entries.find( r->get_first()->get_id() ) != map_entries.end() ){
-            //     if( map_entries[ r->get_first()->get_id() ].find( r->get_second()->get_id() ) != map_entries[ r->get_first()->get_id() ].end() )
-            //         continue;
-            // }
+    	for(auto& r : results){
             cout << "in createMatches ... " << r->get_id() << "\t" << r->get_first()->get_id() << "\t" << r->get_second()->get_id() << "\n";
-
-            // if( cs->get_id() == -3527 ){
-            //     for( auto it : cs->parents() )
-            //         cout << "parent of -3527 ... " << it << "\n";
-            // }
-
       			double score = similarityScore(delta, r);
       			if(score <= 0.05)
       				continue;
@@ -585,7 +544,6 @@ public:
 
       			vector<SVal> segs;
       			bool found = false;
-      			// map<size_t, vector<Coordinates>> nearest = nearestNodesForSplit(source_node, delta->get_intermediate_nodes());
             map<size_t, vector<Coordinates>> pair;
 
             vector<IntNode> cl = delta->get_intermediate_nodes();
@@ -728,17 +686,10 @@ public:
         tn qs = delta->get_first(), qe = delta->get_second(), ms = cs->get_first(), me = cs->get_second();
         if( isWithinCE(qs, ms, ce) && isWithinCE(qe, me, ce) )
             return true;
-        // if( isWithinCE(qs, ms, ce) && ! isWithinCE(qe, me, ce) )
-        //     return true;
-        // if( isWithinCE(qe, me, ce) && ! isWithinCE(qs, ms, ce) )
-        //     return true;
 
         if( isWithinCE(qs, me, ce) && isWithinCE(qe, ms, ce) )
             return true;
-        // if( isWithinCE(qs, me, ce) && ! isWithinCE(qe, ms, ce) )
-        //     return true;
-        // if( ! isWithinCE(qs, me, ce) && isWithinCE(qe, ms, ce) )
-        //     return true;
+	 
         return false;
     }
 
@@ -753,11 +704,6 @@ public:
       			if(!buff->intersects(ls)){
                 toErase.push_back(i);
             }
-            // else if( cs->get_length() <= ce && !withinAngle( delta, cs ) )
-            //     toErase.push_back(i);
-      			// if(!isPotentialCandidate(delta, cs)){
-      			// 	toErase.push_back(i);
-      			// }
       			++i;
     		}
     		size_t cnt = 0;
@@ -787,10 +733,6 @@ public:
 
     		Coordinates c1 = delta->get_first()->get_location(), c2 = delta->get_second()->get_location(),
     					c3 = cs->get_first()->get_location(), c4 = cs->get_second()->get_location();
-
-    		// if((isWithinCE(delta->get_first(), cs->get_first(), ce) && isWithinCE(delta->get_second(), cs->get_second(), ce))
-    		// || (isWithinCE(delta->get_first(), cs->get_second(), ce) && isWithinCE(delta->get_second(), cs->get_first(), ce)))
-    		// 	return true;
 
     		if(delta->get_id() == 1571 && cs->get_id() == 3271)
     			cout << "Right place in potential candidate for 1571. \n";
@@ -985,14 +927,7 @@ public:
           // cout << delta->get_id() << "  " << seg1->get_id() << " " << result_copy.size() << "\n";
           SVal seg1 = result_copy.front();
           result_copy.pop();
-          // if( delta->get_id() == 1207 )
-          //     cout << "handle stubs() seg1 ... " << seg1->get_id() << " " << seg1->get_first()->get_id() << " " << seg1->get_second()->get_id() << "\n";
-          // cout << result_copy.size() << "\n";
-          // if( delta->get_id() == 1207 ){
-          //     cout << "parents ... \n";
-          //     for( auto it : seg1->parents())
-          //         cout << it << "\n";
-          // }
+          
           for( auto j : candidateMatches ){
               SVal seg2 = segments[ 1 ].find( j )->second;
 
